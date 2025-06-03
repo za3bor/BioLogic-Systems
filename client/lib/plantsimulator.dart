@@ -46,8 +46,6 @@ class _PlantSimulatorPageState extends State<PlantSimulatorPage> {
         'aqi': aqi.round(),
       }),
     );
-    print(response.statusCode);
-    print(response.body);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
@@ -63,7 +61,6 @@ class _PlantSimulatorPageState extends State<PlantSimulatorPage> {
             (key, value) => MapEntry(key.toString(), List<num>.from(value)),
           ),
         );
-        print(ideal);
 
         loading = false;
       });
