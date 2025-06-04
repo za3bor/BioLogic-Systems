@@ -5,7 +5,7 @@ const bodyParser = require("body-parser");
 
 const API_KEY = "54cfb51e6f2e98f3f0208cb91f6a1182";
 const second_API_KEY = "c90c3db7b6ea99ec7c9e6c6f21fe8a894f25e331";
-
+const PORT=3000;
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -535,7 +535,11 @@ function gaussianPenalty(val, ideal, sigma = 5, maxPenalty = 0.3) {
   );
 }
 
-const PORT = 3000;
+app.use((err, req, res, next) => {
+  console.error(err.stack);
+  res.status(500).send("Something went wrong!");
+});
+
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);
 });
