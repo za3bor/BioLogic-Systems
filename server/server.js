@@ -2,10 +2,11 @@ const express = require("express");
 const fetch = require("node-fetch");
 const cors = require("cors");
 const bodyParser = require("body-parser");
+const https = require("https");
 
 const API_KEY = "54cfb51e6f2e98f3f0208cb91f6a1182";
 const second_API_KEY = "c90c3db7b6ea99ec7c9e6c6f21fe8a894f25e331";
-const PORT=3000;
+const PORT = 3000;
 const app = express();
 app.use(cors());
 app.use(bodyParser.json());
@@ -13,6 +14,10 @@ app.use(bodyParser.json());
 // In-memory user store for demo
 const users = []; // { username, password, country }
 let userScores = {};
+
+const agent = new https.Agent({
+  family: 4, // force IPv4
+});
 
 app.post("/register", (req, res) => {
   const { username, password, country } = req.body;
@@ -156,7 +161,9 @@ app.get("/city-history", async (req, res) => {
   if (!cityName) return res.status(400).json({ error: "City required" });
 
   // 1. Get coordinates (for Open-Meteo)
-  const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(cityName)}&limit=1&appid=${API_KEY}`;
+  const geoUrl = `http://api.openweathermap.org/geo/1.0/direct?q=${encodeURIComponent(
+    cityName
+  )}&limit=1&appid=${API_KEY}`;
   const geoResp = await fetch(geoUrl).then((r) => r.json());
   if (!geoResp.length) return res.status(404).json({ error: "City not found" });
   const { lat, lon } = geoResp[0];
@@ -168,7 +175,7 @@ app.get("/city-history", async (req, res) => {
 
   // 3. Fetch AQI forecast from WAQI using coordinates
   const aqiUrl = `https://api.waqi.info/feed/geo:${lat};${lon}/?token=${second_API_KEY}`;
-  const aqiResp = await fetch(aqiUrl).then((r) => r.json());
+  const aqiResp = await fetch(aqiUrl, { agent }).then((r) => r.json());
   let aqiData = [];
   if (
     aqiResp.status === "ok" &&
@@ -262,7 +269,6 @@ app.get("/weather", async (req, res) => {
 
   res.json({ temp, humidity, wind, desc, suggestions });
 });
-
 
 app.post("/eco-action", (req, res) => {
   const { username, action } = req.body;
