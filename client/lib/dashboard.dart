@@ -108,7 +108,7 @@ class _DashboardPageState extends State<DashboardPage> {
         iconTheme: IconThemeData(color: Colors.white),
 
         title: Text(
-          'EcoAir Dashboard',
+          'AirWise Dashboard',
           style: GoogleFonts.nunito(
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
@@ -135,7 +135,7 @@ class _DashboardPageState extends State<DashboardPage> {
               child: Align(
                 alignment: Alignment.bottomLeft,
                 child: Text(
-                  'EcoAir Menu',
+                  'AirWise Menu',
                   style: GoogleFonts.nunito(
                     color: Colors.white,
                     fontSize: 24,

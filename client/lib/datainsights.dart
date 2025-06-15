@@ -113,7 +113,7 @@ class _DataInsightsPageState extends State<DataInsightsPage> {
         iconTheme: IconThemeData(color: Colors.white),
 
         title: Text(
-          'EcoAir Insights',
+          'AirWise Insights',
           style: GoogleFonts.openSans(
             fontWeight: FontWeight.w600,
             fontSize: 20,
