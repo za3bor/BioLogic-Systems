@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:airwise/constant.dart';
 import 'package:airwise/dashboard.dart';
 import 'package:flutter/material.dart';
@@ -32,7 +31,7 @@ class _AuthPageState extends State<AuthPage> {
   }
 
   void fetchCountries() async {
-    final response = await http.get(Uri.parse('http://$ipAddress/countries'));
+    final response = await http.get(Uri.parse('http://$ipAddress/api/countries'));
 
     if (response.statusCode == 200) {
       setState(() {
@@ -45,7 +44,7 @@ class _AuthPageState extends State<AuthPage> {
 
   void fetchCities(String country) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/cities?country=$country'),
+      Uri.parse('http://$ipAddress/api/cities?country=$country'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -57,7 +56,7 @@ class _AuthPageState extends State<AuthPage> {
 
   void register() async {
     final response = await http.post(
-      Uri.parse('http://$ipAddress/register'),
+      Uri.parse('http://$ipAddress/api/register'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'username': username,
@@ -79,7 +78,7 @@ class _AuthPageState extends State<AuthPage> {
 
   void login() async {
     final response = await http.post(
-      Uri.parse('http://$ipAddress/login'),
+      Uri.parse('http://$ipAddress/api/login'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({'username': username, 'password': password}),
     );

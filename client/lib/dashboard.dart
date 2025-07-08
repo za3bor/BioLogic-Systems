@@ -2,9 +2,9 @@ import 'dart:convert';
 import 'package:airwise/constant.dart';
 import 'package:airwise/countryagrimap.dart';
 import 'package:airwise/datainsights.dart';
-import 'package:airwise/ecoscore.dart';
 import 'package:airwise/plantsimulator.dart';
-import 'package:airwise/weather.dart';
+import 'package:airwise/aichatbot.dart';
+import 'package:airwise/geneticalgoecomodeling.dart';
 import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_animate/flutter_animate.dart';
@@ -41,7 +41,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchWeather(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/weather?city=$cityName'),
+      Uri.parse('http://$ipAddress/api/weather?city=$cityName'),
     );
     if (response.statusCode == 200) {
       final w = jsonDecode(response.body);
@@ -58,7 +58,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void fetchCities(String country) async {
     setState(() => isLoading = true);
     final response = await http.get(
-      Uri.parse('http://$ipAddress/cities?country=$country'),
+      Uri.parse('http://$ipAddress/api/cities?country=$country'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -75,7 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchAQI(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/aqi?city=$cityName'),
+      Uri.parse('http://$ipAddress/api/aqi?city=$cityName'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -89,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchTrend(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/aqi-trend?city=$cityName'),
+      Uri.parse('http://$ipAddress/api/aqi-trend?city=$cityName'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -147,10 +147,10 @@ class _DashboardPageState extends State<DashboardPage> {
             ),
             ...[
               ['Data Insights', DataInsightsPage(city: city)],
-              ['Weather', WeatherPage(city: city)],
-              ['EcoScore', EcoScorePage(username: widget.username)],
               ['Plant simulator', PlantSimulatorPage()],
               ['Country Agri Map', CountryAgriMapPage(country: widget.country)],
+              ['AI Farming Assistant', AIChatbotPage()],
+              ['Genetic Ecomodeling', GeneticAlgoEcomodelingPage()],
             ].map((item) {
               final title = item[0] as String;
               final page = item[1] as Widget;
@@ -341,20 +341,26 @@ class _DashboardPageState extends State<DashboardPage> {
                           aqiEmoji(aqi),
                           style: TextStyle(fontSize: 45),
                         ),
-                        title: Text(
-                          'AQI: ${aqi ?? "Loading..."}',
-                          style: GoogleFonts.nunito(
-                            fontSize: 32,
-                            fontWeight: FontWeight.w900,
-                            color: Colors.white,
-                          ),
-                        ),
-                        subtitle: Text(
-                          aqiStatus(aqi),
-                          style: GoogleFonts.nunito(
-                            fontSize: 20,
-                            color: Colors.white70,
-                          ),
+                        title: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'AQI: ${aqi ?? "Loading..."}',
+                              style: GoogleFonts.nunito(
+                                fontSize: 32,
+                                fontWeight: FontWeight.w900,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Air Quality Index',
+                              style: GoogleFonts.nunito(
+                                fontSize: 16,
+                                color: Colors.white70,
+                              ),
+                            ),
+                          ],
                         ),
                       ),
                     ).animate().fadeIn(delay: 200.ms).slideY(begin: 0.1),
@@ -453,6 +459,12 @@ class _DashboardPageState extends State<DashboardPage> {
         return Icons.eco;
       case 'Country Agri Map':
         return Icons.map;
+      case 'Plant simulator':
+        return Icons.grass;
+      case 'AI Farming Assistant':
+        return Icons.smart_toy;
+      case 'Genetic Ecomodeling':
+        return Icons.biotech;
       default:
         return Icons.menu;
     }

@@ -1,4 +1,3 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -8,89 +7,70 @@ class CityDetailDialog extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final growthSeries = List<Map<String, dynamic>>.from(city['growthSeries']);
-    final weatherSeries = List<Map<String, dynamic>>.from(
-      city['weatherSeries'],
-    );
-    final aqiSeries = List<Map<String, dynamic>>.from(city['aqiSeries']);
-
     return AlertDialog(
       backgroundColor: Colors.grey[50],
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      title: Text(
-        city['name'],
-        style: GoogleFonts.lato(
-          fontSize: 22,
-          fontWeight: FontWeight.bold,
-          color: Colors.green[800],
-        ),
+      title: Row(
+        children: [
+          Icon(Icons.location_city, color: Colors.green[800], size: 24),
+          SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  city['name'],
+                  style: GoogleFonts.lato(
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.green[800],
+                  ),
+                ),
+                Text(
+                  city['plant'] ?? 'Agricultural Analysis',
+                  style: GoogleFonts.lato(
+                    fontSize: 14,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       content: SizedBox(
-        width: 300,
+        width: 400,
+        height: 600,
         child: SingleChildScrollView(
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _sectionTitle('🏷️ Suitability'),
-              const SizedBox(height: 6),
-              Text(
-                '${city['score']} (${city['reason']})',
-                style: GoogleFonts.lato(
-                  fontSize: 16,
-                  color: Colors.green[700],
-                  fontWeight: FontWeight.w600,
-                ),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 12,
-                runSpacing: 8,
-                children: [
-                  _infoChip(
-                    'Avg Temp',
-                    '${city['avgTemp'].toStringAsFixed(1)}°C',
-                    Icons.thermostat,
-                  ),
-                  _infoChip(
-                    'Humidity',
-                    '${city['avgHumidity'].toStringAsFixed(0)}%',
-                    Icons.water_drop,
-                  ),
-                  _infoChip(
-                    'AQI',
-                    '${city['avgAqi'].toStringAsFixed(1)}',
-                    Icons.air,
-                  ),
-                ],
-              ),
-              const SizedBox(height: 24),
-
-              _sectionTitle('🌱 Simulated Crop Growth'),
-              const SizedBox(height: 10),
-              _buildChart(
-                spots:
-                    growthSeries
-                        .map(
-                          (e) => FlSpot(
-                            (e['t'] as num).toDouble(),
-                            (e['N'] as num).toDouble(),
-                          ),
-                        )
-                        .toList(),
-                color: Colors.green,
-                height: 180,
-                yLabel: 'Growth',
-                xLabelBuilder:
-                    (v) => Text(
-                      '${v.toInt()}d',
-                      style: GoogleFonts.roboto(fontSize: 10),
-                    ),
-              ),
-              const SizedBox(height: 24),
-
-              _sectionTitle('📊 Weather & AQI Trends'),
-              const SizedBox(height: 10),
-              _buildMultiChart(weatherSeries, aqiSeries),
+              // Overall Suitability Score
+              _buildOverallScoreCard(),
+              SizedBox(height: 16),
+              
+              // Environmental Analysis
+              _buildEnvironmentalAnalysis(),
+              SizedBox(height: 16),
+              
+              // Soil Analysis
+              _buildSoilAnalysis(),
+              SizedBox(height: 16),
+              
+              // Seasonal Analysis
+              _buildSeasonalAnalysis(),
+              SizedBox(height: 16),
+              
+              // Risk Assessment
+              _buildRiskAssessment(),
+              SizedBox(height: 16),
+              
+              // Economic Analysis
+              _buildEconomicAnalysis(),
+              SizedBox(height: 16),
+              
+              // Farming Recommendations
+              _buildFarmingRecommendations(),
             ],
           ),
         ),
@@ -111,220 +91,429 @@ class CityDetailDialog extends StatelessWidget {
     );
   }
 
-  Widget _sectionTitle(String title) {
-    return Text(
-      title,
-      style: GoogleFonts.lato(
-        fontSize: 18,
-        fontWeight: FontWeight.bold,
-        color: Colors.blueGrey[800],
-      ),
-    );
-  }
+  Widget _buildOverallScoreCard() {
+    final score = city['overallScore'] ?? 0;
+    final category = city['score'] ?? 'Unknown';
+    final reason = city['reason'] ?? 'No analysis available';
+    
+    Color scoreColor = Colors.grey;
+    IconData scoreIcon = Icons.help;
+    
+    switch (category.toLowerCase()) {
+      case 'excellent':
+        scoreColor = Colors.green[700]!;
+        scoreIcon = Icons.star;
+        break;
+      case 'good':
+        scoreColor = Colors.green;
+        scoreIcon = Icons.thumb_up;
+        break;
+      case 'moderate':
+        scoreColor = Colors.orange;
+        scoreIcon = Icons.warning;
+        break;
+      case 'challenging':
+        scoreColor = Colors.red[600]!;
+        scoreIcon = Icons.error;
+        break;
+      case 'poor':
+        scoreColor = Colors.red[900]!;
+        scoreIcon = Icons.dangerous;
+        break;
+    }
 
-  Widget _infoChip(String label, String value, IconData icon) {
-    return Chip(
-      backgroundColor: Colors.grey.shade100,
-      avatar: Icon(icon, size: 18, color: Colors.grey.shade700),
-      label: Text(
-        '$label: $value',
-        style: GoogleFonts.roboto(fontWeight: FontWeight.w500),
-      ),
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-    );
-  }
-
-  Widget _legendDot(Color color) {
-    return Container(
-      width: 12,
-      height: 12,
-      margin: const EdgeInsets.only(right: 4),
-      decoration: BoxDecoration(color: color, shape: BoxShape.circle),
-    );
-  }
-
-  Widget _buildChart({
-    required List<FlSpot> spots,
-    required Color color,
-    required double height,
-    required String yLabel,
-    required Widget Function(double) xLabelBuilder,
-  }) {
     return Card(
-      elevation: 3,
+      elevation: 4,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: SizedBox(
-          height: height,
-          child: LineChart(
-            LineChartData(
-              gridData: FlGridData(show: true),
-              titlesData: FlTitlesData(
-                leftTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: true, reservedSize: 40),
-                ),
-                rightTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                topTitles: AxisTitles(
-                  sideTitles: SideTitles(showTitles: false),
-                ),
-                bottomTitles: AxisTitles(
-                  sideTitles: SideTitles(
-                    showTitles: true,
-                    getTitlesWidget:
-                        (value, meta) => Text(
-                          '${value.toInt()}d',
-                          style: TextStyle(fontSize: 10),
-                        ),
-                  ),
-                ),
-              ),
-              borderData: FlBorderData(show: true),
-              lineBarsData: [
-                LineChartBarData(
-                  spots: spots,
-                  isCurved: true,
-                  barWidth: 3,
-                  color: color,
-                  dotData: FlDotData(show: false),
-                ),
-              ],
-              lineTouchData: LineTouchData(
-                touchTooltipData: LineTouchTooltipData(
-                  getTooltipItems: (touchedSpots) {
-                    return touchedSpots.map((spot) {
-                      return LineTooltipItem(
-                        spot.y.toStringAsFixed(2),
-                        TextStyle(
-                          color:
-                              Colors
-                                  .white, // 👈 Change this to your desired color
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
-                      );
-                    }).toList();
-                  },
-                ),
-              ),
-            ),
+      child: Container(
+        padding: EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(12),
+          gradient: LinearGradient(
+            colors: [scoreColor.withValues(alpha: 0.1), Colors.white],
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
           ),
         ),
-      ),
-    );
-  }
-
-  Widget _buildMultiChart(
-    List<Map<String, dynamic>> weatherSeries,
-    List<Map<String, dynamic>> aqiSeries,
-  ) {
-    return Card(
-      elevation: 3,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
         child: Column(
           children: [
-            SizedBox(
-              height: 200,
-              child: LineChart(
-                LineChartData(
-                  gridData: FlGridData(show: true),
-                  titlesData: FlTitlesData(
-                    leftTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30,
-                      ),
-                    ),
-                    rightTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    topTitles: AxisTitles(
-                      sideTitles: SideTitles(showTitles: false),
-                    ),
-                    bottomTitles: AxisTitles(
-                      sideTitles: SideTitles(
-                        showTitles: true,
-                        reservedSize: 30, // enough space for label
-                        getTitlesWidget: (value, meta) {
-                          final billions = value / 1e9;
-                          String label;
-
-                          if (billions >= 1) {
-                            label =
-                                '${billions.toStringAsFixed(1)}B'; // e.g., 1.2B
-                          } else {
-                            label =
-                                value
-                                    .toInt()
-                                    .toString(); // fallback to normal number if less than 1 billion
-                          }
-
-                          return Padding(
-                            padding: const EdgeInsets.only(top: 5),
-                            child: Text(
-                              label,
-                              style: GoogleFonts.roboto(fontSize: 11),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ),
-
-                  borderData: FlBorderData(show: true),
-                  lineBarsData: [
-                    LineChartBarData(
-                      spots:
-                          weatherSeries
-                              .map(
-                                (e) => FlSpot(
-                                  (e['dt'] as num).toDouble(),
-                                  (e['temp'] as num?)?.toDouble() ?? 0,
-                                ),
-                              )
-                              .toList(),
-                      isCurved: true,
-                      barWidth: 2.5,
-                      color: Colors.orange,
-                      dotData: FlDotData(show: false),
-                    ),
-                    LineChartBarData(
-                      spots:
-                          aqiSeries
-                              .map(
-                                (e) => FlSpot(
-                                  (e['dt'] as num).toDouble(),
-                                  (e['aqi'] as num?)?.toDouble() ?? 0,
-                                ),
-                              )
-                              .toList(),
-                      isCurved: true,
-                      barWidth: 2.5,
-                      color: Colors.blue,
-                      dotData: FlDotData(show: false),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 35),
             Row(
-              mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                _legendDot(Colors.orange),
-                Text('Temp', style: GoogleFonts.roboto(fontSize: 13)),
-                const SizedBox(width: 20),
-                _legendDot(Colors.blue),
-                Text('AQI', style: GoogleFonts.roboto(fontSize: 13)),
+                Icon(scoreIcon, color: scoreColor, size: 28),
+                SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Overall Suitability: ${category.toUpperCase()}',
+                        style: GoogleFonts.lato(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: scoreColor,
+                        ),
+                      ),
+                      Text(
+                        'Score: $score/100',
+                        style: GoogleFonts.lato(
+                          fontSize: 14,
+                          color: Colors.grey[600],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
+            ),
+            SizedBox(height: 8),
+            Text(
+              reason,
+              style: GoogleFonts.lato(
+                fontSize: 14,
+                color: Colors.grey[700],
+              ),
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildEnvironmentalAnalysis() {
+    final env = city['environmental'] ?? {};
+    final temp = env['temperature'] ?? {};
+    final humidity = env['humidity'] ?? {};
+    final airQuality = env['airQuality'] ?? {};
+
+    return _buildSectionCard(
+      title: '🌡️ Environmental Conditions',
+      children: [
+        _buildFactorRow(
+          'Temperature',
+          '${temp['value']?.toStringAsFixed(1) ?? 'N/A'}°C',
+          temp['suitable'] ?? false,
+          'Optimal: ${temp['optimal']?[0] ?? 'N/A'}-${temp['optimal']?[1] ?? 'N/A'}°C',
+        ),
+        _buildFactorRow(
+          'Humidity',
+          '${humidity['value']?.toStringAsFixed(0) ?? 'N/A'}%',
+          humidity['suitable'] ?? false,
+          'Optimal: ${humidity['optimal']?[0] ?? 'N/A'}-${humidity['optimal']?[1] ?? 'N/A'}%',
+        ),
+        _buildFactorRow(
+          'Air Quality',
+          '${airQuality['value']?.toStringAsFixed(0) ?? 'N/A'} AQI',
+          airQuality['suitable'] ?? false,
+          'Optimal: ${airQuality['optimal']?[0] ?? 'N/A'}-${airQuality['optimal']?[1] ?? 'N/A'}',
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Environmental Factor: ${((env['factor'] ?? 0) * 100).toStringAsFixed(1)}%',
+          style: GoogleFonts.roboto(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.green[700],
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSoilAnalysis() {
+    final soil = city['soil'] ?? {};
+
+    return _buildSectionCard(
+      title: '🌱 Soil Analysis',
+      children: [
+        _buildFactorRow(
+          'Soil Type',
+          (soil['type'] ?? 'N/A').toString().replaceAll('-', ' ').toUpperCase(),
+          soil['suitable'] ?? false,
+          'Optimal: ${(soil['optimalTypes'] ?? []).join(', ')}',
+        ),
+        _buildFactorRow(
+          'Soil pH',
+          '${soil['pH']?.toStringAsFixed(1) ?? 'N/A'}',
+          soil['suitable'] ?? false,
+          'Optimal: ${soil['optimalPH']?[0] ?? 'N/A'}-${soil['optimalPH']?[1] ?? 'N/A'}',
+        ),
+      ],
+    );
+  }
+
+  Widget _buildSeasonalAnalysis() {
+    final seasonal = city['seasonal'] ?? {};
+
+    return _buildSectionCard(
+      title: '📅 Seasonal Analysis',
+      children: [
+        _buildFactorRow(
+          'Current Season',
+          seasonal['currentSeason'] ?? 'N/A',
+          seasonal['suitable'] ?? false,
+          'Factor: ${((seasonal['factor'] ?? 0) * 100).toStringAsFixed(1)}%',
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Best Planting Seasons:',
+          style: GoogleFonts.roboto(
+            fontSize: 14,
+            fontWeight: FontWeight.w600,
+            color: Colors.grey[700],
+          ),
+        ),
+        Wrap(
+          spacing: 8,
+          runSpacing: 4,
+          children: ((seasonal['bestSeasons'] ?? []) as List)
+              .map((season) => Chip(
+                    label: Text(
+                      season.toString(),
+                      style: TextStyle(fontSize: 12),
+                    ),
+                    backgroundColor: Colors.green[100],
+                  ))
+              .toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRiskAssessment() {
+    final risks = city['risks'] ?? {};
+
+    return _buildSectionCard(
+      title: '⚠️ Risk Assessment',
+      children: [
+        _buildRiskRow('Disease Risk', risks['disease'] ?? 'Unknown'),
+        _buildRiskRow('Weather Risk', risks['weather'] ?? 'Unknown'),
+        if ((risks['commonDiseases'] ?? []).isNotEmpty) ...[
+          SizedBox(height: 8),
+          Text(
+            'Common Diseases:',
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: ((risks['commonDiseases'] ?? []) as List)
+                .map((disease) => Chip(
+                      label: Text(
+                        disease.toString(),
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      backgroundColor: Colors.red[100],
+                    ))
+                .toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildEconomicAnalysis() {
+    final economics = city['economics'] ?? {};
+
+    return _buildSectionCard(
+      title: '💰 Economic Analysis',
+      children: [
+        _buildEconomicRow('Estimated Yield', '${economics['estimatedYield'] ?? 0} kg'),
+        _buildEconomicRow('Total Costs', '\$${economics['totalCosts'] ?? 0}'),
+        _buildEconomicRow('Gross Revenue', '\$${economics['grossRevenue'] ?? 0}'),
+        _buildEconomicRow('Net Profit', '\$${economics['netProfit'] ?? 0}'),
+        _buildEconomicRow('Profit Margin', '${economics['profitMargin'] ?? 0}%'),
+        _buildEconomicRow('ROI', '${economics['roi'] ?? 0}%'),
+        _buildEconomicRow('Break-even', '${economics['breakEven'] ?? 0} kg'),
+      ],
+    );
+  }
+
+  Widget _buildFarmingRecommendations() {
+    final farming = city['farming'] ?? {};
+
+    return _buildSectionCard(
+      title: '🚜 Farming Information',
+      children: [
+        _buildInfoRow('Days to Maturity', '${farming['daysToMaturity'] ?? 'N/A'} days'),
+        _buildInfoRow('Harvest Window', '${farming['harvestWindow'] ?? 'N/A'} days'),
+        _buildInfoRow('Water Requirements', '${farming['waterRequirements'] ?? 'N/A'} mm'),
+        if ((farming['companionPlants'] ?? []).isNotEmpty) ...[
+          SizedBox(height: 8),
+          Text(
+            'Companion Plants:',
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+              color: Colors.grey[700],
+            ),
+          ),
+          Wrap(
+            spacing: 8,
+            runSpacing: 4,
+            children: ((farming['companionPlants'] ?? []) as List)
+                .map((plant) => Chip(
+                      label: Text(
+                        plant.toString(),
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      backgroundColor: Colors.blue[100],
+                    ))
+                .toList(),
+          ),
+        ],
+      ],
+    );
+  }
+
+  Widget _buildSectionCard({required String title, required List<Widget> children}) {
+    return Card(
+      elevation: 3,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              title,
+              style: GoogleFonts.lato(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: Colors.blueGrey[800],
+              ),
+            ),
+            SizedBox(height: 12),
+            ...children,
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFactorRow(String label, String value, bool suitable, String optimal) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(
+            suitable ? Icons.check_circle : Icons.cancel,
+            color: suitable ? Colors.green : Colors.red,
+            size: 18,
+          ),
+          SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  '$label: $value',
+                  style: GoogleFonts.roboto(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+                Text(
+                  optimal,
+                  style: GoogleFonts.roboto(
+                    fontSize: 12,
+                    color: Colors.grey[600],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildRiskRow(String label, String risk) {
+    Color riskColor = Colors.grey;
+    IconData riskIcon = Icons.help;
+    
+    switch (risk.toLowerCase()) {
+      case 'low':
+        riskColor = Colors.green;
+        riskIcon = Icons.check_circle;
+        break;
+      case 'medium':
+        riskColor = Colors.orange;
+        riskIcon = Icons.warning;
+        break;
+      case 'high':
+        riskColor = Colors.red;
+        riskIcon = Icons.error;
+        break;
+    }
+
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 4),
+      child: Row(
+        children: [
+          Icon(riskIcon, color: riskColor, size: 18),
+          SizedBox(width: 8),
+          Text(
+            '$label: ${risk.toUpperCase()}',
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEconomicRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              color: Colors.grey[700],
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoRow(String label, String value) {
+    return Padding(
+      padding: EdgeInsets.symmetric(vertical: 2),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            label,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              color: Colors.grey[700],
+            ),
+          ),
+          Text(
+            value,
+            style: GoogleFonts.roboto(
+              fontSize: 14,
+              fontWeight: FontWeight.w600,
+            ),
+          ),
+        ],
       ),
     );
   }
