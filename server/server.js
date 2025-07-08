@@ -16,7 +16,12 @@ const PORT = 3000;
 const GEMINI_API_KEY = "AIzaSyDS7FaSpsQt1SUbF_T5MwcB44x99XFS38M";
 const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 const app = express();
-app.use(cors());
+app.use((req, res, next) => {
+  res.setHeader('Access-Control-Allow-Origin', 'https://web-mu-bay.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  next();
+});
 app.use(bodyParser.json());
 
 // In-memory user store for demo
