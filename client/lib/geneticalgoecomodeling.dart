@@ -349,7 +349,7 @@ class _GeneticAlgoEcomodelingPageState
 
       // Call server-side genetic optimization
       final response = await http.post(
-        Uri.parse('http://$ipAddress/api/genetic-optimization'),
+        Uri.parse('https://$ipAddress/api/genetic-optimization'),
         headers: {'Content-Type': 'application/json'},
         body: json.encode(requestData),
       );
