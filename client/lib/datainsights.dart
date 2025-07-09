@@ -30,7 +30,7 @@ class _DataInsightsPageState extends State<DataInsightsPage> {
     });
     final response = await http.get(
       Uri.parse(
-        'http://$ipAddress/api/city-history?city=${Uri.encodeComponent(widget.city)}',
+        'https://$ipAddress/api/city-history?city=${Uri.encodeComponent(widget.city)}',
       ),
       headers: {'Content-Type': 'application/json'},
     );
