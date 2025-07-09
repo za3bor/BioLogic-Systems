@@ -41,7 +41,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchWeather(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/api/weather?city=$cityName'),
+      Uri.parse('https://$ipAddress/api/weather?city=$cityName'),
     );
     if (response.statusCode == 200) {
       final w = jsonDecode(response.body);
@@ -58,7 +58,7 @@ class _DashboardPageState extends State<DashboardPage> {
   void fetchCities(String country) async {
     setState(() => isLoading = true);
     final response = await http.get(
-      Uri.parse('http://$ipAddress/api/cities?country=$country'),
+      Uri.parse('https://$ipAddress/api/cities?country=$country'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -75,7 +75,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchAQI(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/api/aqi?city=$cityName'),
+      Uri.parse('https://$ipAddress/api/aqi?city=$cityName'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -89,7 +89,7 @@ class _DashboardPageState extends State<DashboardPage> {
 
   void fetchTrend(String cityName) async {
     final response = await http.get(
-      Uri.parse('http://$ipAddress/api/aqi-trend?city=$cityName'),
+      Uri.parse('https://$ipAddress/api/aqi-trend?city=$cityName'),
     );
     if (response.statusCode == 200) {
       setState(() {
@@ -206,7 +206,7 @@ class _DashboardPageState extends State<DashboardPage> {
                   ),
                   children: [
                     Text(
-                      'Good morning, ${widget.username}!',
+                      'Hello, ${widget.username}!',
                       style: GoogleFonts.nunito(
                         fontSize: 26,
                         fontWeight: FontWeight.bold,
