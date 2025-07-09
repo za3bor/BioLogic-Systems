@@ -22,14 +22,20 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
   List<String> plantNames = [];
   bool loadingPlants = true;
   bool confirmedPlant = false;
-  
+
   // Soil selection variables
   String selectedSoilType = "loamy";
   double selectedSoilPH = 6.5;
-  
+
   // Available soil types
   final List<String> soilTypes = [
-    "sandy", "loamy", "clay", "sandy-loam", "clay-loam", "silt", "peaty"
+    "sandy",
+    "loamy",
+    "clay",
+    "sandy-loam",
+    "clay-loam",
+    "silt",
+    "peaty",
   ];
 
   @override
@@ -45,7 +51,7 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
     });
     final resp = await http.get(
       Uri.parse(
-        'http://$ipAddress/api/agri-suitability-cities?plant=${Uri.encodeComponent(plant)}'
+        'https://$ipAddress/api/agri-suitability-cities?plant=${Uri.encodeComponent(plant)}'
         '&country=${Uri.encodeComponent(widget.country)}'
         '&soilType=${Uri.encodeComponent(selectedSoilType)}'
         '&soilPH=${selectedSoilPH.toString()}',
@@ -66,7 +72,9 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
   }
 
   Future<void> fetchPlantNames() async {
-    final resp = await http.get(Uri.parse('http://$ipAddress/api/plant-names'));
+    final resp = await http.get(
+      Uri.parse('https://$ipAddress/api/plant-names'),
+    );
     if (resp.statusCode == 200) {
       setState(() {
         plantNames = List<String>.from(jsonDecode(resp.body)['plants']);
@@ -120,7 +128,7 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
   Future<Map<String, dynamic>?> fetchAgriSuitability(String city) async {
     final resp = await http.get(
       Uri.parse(
-        'http://$ipAddress/api/agri-suitability-city?city=${Uri.encodeComponent(city)}'
+        'https://$ipAddress/api/agri-suitability-city?city=${Uri.encodeComponent(city)}'
         '&plant=${Uri.encodeComponent(selectedPlant!)}'
         '&soilType=${Uri.encodeComponent(selectedSoilType)}'
         '&soilPH=${selectedSoilPH.toString()}',
@@ -199,7 +207,9 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                 width: double.infinity,
                                 padding: EdgeInsets.symmetric(horizontal: 12),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: DropdownButton<String>(
@@ -207,12 +217,13 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                   hint: Text('Choose a plant to analyze'),
                                   isExpanded: true,
                                   underline: SizedBox(),
-                                  items: plantNames.map((plant) {
-                                    return DropdownMenuItem(
-                                      value: plant,
-                                      child: Text(plant),
-                                    );
-                                  }).toList(),
+                                  items:
+                                      plantNames.map((plant) {
+                                        return DropdownMenuItem(
+                                          value: plant,
+                                          child: Text(plant),
+                                        );
+                                      }).toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       selectedPlant = value;
@@ -225,9 +236,9 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                           ),
                         ),
                       ),
-                      
+
                       SizedBox(height: 16),
-                      
+
                       // Soil Selection
                       Card(
                         elevation: 4,
@@ -245,7 +256,7 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                 ),
                               ),
                               SizedBox(height: 10),
-                              
+
                               // Soil Type Selection
                               Text(
                                 'Soil Type:',
@@ -259,19 +270,26 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                 width: double.infinity,
                                 padding: EdgeInsets.symmetric(horizontal: 12),
                                 decoration: BoxDecoration(
-                                  border: Border.all(color: Colors.grey.shade300),
+                                  border: Border.all(
+                                    color: Colors.grey.shade300,
+                                  ),
                                   borderRadius: BorderRadius.circular(8),
                                 ),
                                 child: DropdownButton<String>(
                                   value: selectedSoilType,
                                   isExpanded: true,
                                   underline: SizedBox(),
-                                  items: soilTypes.map((soil) {
-                                    return DropdownMenuItem(
-                                      value: soil,
-                                      child: Text(soil.replaceAll('-', ' ').toUpperCase()),
-                                    );
-                                  }).toList(),
+                                  items:
+                                      soilTypes.map((soil) {
+                                        return DropdownMenuItem(
+                                          value: soil,
+                                          child: Text(
+                                            soil
+                                                .replaceAll('-', ' ')
+                                                .toUpperCase(),
+                                          ),
+                                        );
+                                      }).toList(),
                                   onChanged: (value) {
                                     setState(() {
                                       selectedSoilType = value!;
@@ -279,9 +297,9 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                   },
                                 ),
                               ),
-                              
+
                               SizedBox(height: 16),
-                              
+
                               // Soil pH Selection
                               Text(
                                 'Soil pH: ${selectedSoilPH.toStringAsFixed(1)}',
@@ -305,32 +323,48 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                 },
                               ),
                               Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: [
-                                  Text('4.0 (Acidic)', style: TextStyle(fontSize: 12)),
-                                  Text('7.0 (Neutral)', style: TextStyle(fontSize: 12)),
-                                  Text('9.0 (Alkaline)', style: TextStyle(fontSize: 12)),
+                                  Text(
+                                    '4.0 (Acidic)',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    '7.0 (Neutral)',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
+                                  Text(
+                                    '9.0 (Alkaline)',
+                                    style: TextStyle(fontSize: 12),
+                                  ),
                                 ],
                               ),
                             ],
                           ),
                         ),
                       ),
-                      
+
                       SizedBox(height: 24),
-                      
+
                       // Analyze Button
                       ElevatedButton(
-                        onPressed: selectedPlant != null ? () {
-                          setState(() {
-                            confirmedPlant = true;
-                          });
-                          fetchCitiesAndCoordsForPlant(selectedPlant!);
-                        } : null,
+                        onPressed:
+                            selectedPlant != null
+                                ? () {
+                                  setState(() {
+                                    confirmedPlant = true;
+                                  });
+                                  fetchCitiesAndCoordsForPlant(selectedPlant!);
+                                }
+                                : null,
                         style: ElevatedButton.styleFrom(
                           backgroundColor: Colors.green.shade700,
                           foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 16, horizontal: 32),
+                          padding: EdgeInsets.symmetric(
+                            vertical: 16,
+                            horizontal: 32,
+                          ),
                           shape: RoundedRectangleBorder(
                             borderRadius: BorderRadius.circular(8),
                           ),
@@ -356,6 +390,14 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                     SizedBox(height: 16),
                     Text(
                       'Loading map...',
+                      style: GoogleFonts.nunito(
+                        fontSize: 16,
+                        color: Colors.black,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    Text(
+                      'It take a while to load the map, please wait.',
                       style: GoogleFonts.nunito(
                         fontSize: 16,
                         color: Colors.black,
@@ -450,7 +492,9 @@ class _CountryAgriMapPageState extends State<CountryAgriMapPage> {
                                     children: [
                                       Icon(
                                         Icons.location_on,
-                                        color: _getSuitabilityColor(city['suitability']),
+                                        color: _getSuitabilityColor(
+                                          city['suitability'],
+                                        ),
                                         size: 36,
                                       ),
                                       Container(
