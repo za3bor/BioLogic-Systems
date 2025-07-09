@@ -11,45 +11,56 @@ class AIChatbotPage extends StatefulWidget {
   State<AIChatbotPage> createState() => _AIChatbotPageState();
 }
 
-class _AIChatbotPageState extends State<AIChatbotPage> {
+class _AIChatbotPageState extends State<AIChatbotPage> with TickerProviderStateMixin {
   final TextEditingController _plantController = TextEditingController();
   final TextEditingController _customPromptController = TextEditingController();
   final ScrollController _scrollController = ScrollController();
+  final FocusNode _plantFocusNode = FocusNode();
+  final FocusNode _promptFocusNode = FocusNode();
   
   List<ChatMessage> messages = [];
   bool isLoading = false;
   String selectedPromptTemplate = '';
   bool _isNearBottom = true;
+  bool _isInputExpanded = false;
+  late AnimationController _fabAnimationController;
+  late Animation<double> _fabAnimation;
 
   final List<PromptTemplate> promptTemplates = [
     PromptTemplate(
       title: 'Growing Guide',
       icon: Icons.eco,
+      color: Colors.green,
       template: 'Provide a comprehensive growing guide for {plant}. Include soil requirements, climate needs, planting schedule, watering instructions, fertilization, common diseases, pest management, and harvesting tips.',
     ),
     PromptTemplate(
       title: 'Disease Prevention',
-      icon: Icons.healing,
+      icon: Icons.local_hospital,
+      color: Colors.red,
       template: 'What are the most common diseases affecting {plant}? Provide detailed prevention strategies, early detection signs, and organic treatment methods.',
     ),
     PromptTemplate(
       title: 'Pest Management',
       icon: Icons.bug_report,
+      color: Colors.orange,
       template: 'Help me manage pests for {plant}. Include identification of common pests, natural pest control methods, companion planting suggestions, and integrated pest management strategies.',
     ),
     PromptTemplate(
       title: 'Soil & Fertilization',
-      icon: Icons.landscape,
+      icon: Icons.terrain,
+      color: Colors.brown,
       template: 'What are the ideal soil conditions for {plant}? Provide information about soil pH, nutrients, organic matter, drainage requirements, and fertilization schedule.',
     ),
     PromptTemplate(
       title: 'Climate Adaptation',
       icon: Icons.wb_sunny,
+      color: Colors.amber,
       template: 'How can I adapt {plant} growing to different climate conditions? Include information about temperature tolerance, season extension, greenhouse growing, and climate change adaptation.',
     ),
     PromptTemplate(
       title: 'Harvest & Storage',
       icon: Icons.agriculture,
+      color: Colors.purple,
       template: 'When and how should I harvest {plant}? Provide detailed harvesting techniques, post-harvest handling, storage methods, and value-added processing options.',
     ),
   ];
@@ -58,9 +69,15 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
   void initState() {
     super.initState();
     _addWelcomeMessage();
-    // Add scroll listener to track scroll position
     _scrollController.addListener(_scrollListener);
-    // Ensure scroll controller is ready and scroll to bottom after welcome message
+    _fabAnimationController = AnimationController(
+      duration: const Duration(milliseconds: 300),
+      vsync: this,
+    );
+    _fabAnimation = Tween<double>(begin: 0.0, end: 1.0).animate(
+      CurvedAnimation(parent: _fabAnimationController, curve: Curves.easeInOut),
+    );
+    
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _scrollToBottomInstant();
     });
@@ -68,7 +85,7 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
 
   void _scrollListener() {
     if (_scrollController.hasClients) {
-      double threshold = 100.0; // pixels from bottom
+      double threshold = 100.0;
       double position = _scrollController.position.pixels;
       double maxScrollExtent = _scrollController.position.maxScrollExtent;
       
@@ -77,13 +94,19 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
         setState(() {
           _isNearBottom = newIsNearBottom;
         });
+        
+        if (_isNearBottom) {
+          _fabAnimationController.reverse();
+        } else {
+          _fabAnimationController.forward();
+        }
       }
     }
   }
 
   void _addWelcomeMessage() {
     messages.add(ChatMessage(
-      text: "🌱 Welcome to AirWise AI Farming Assistant!\n\nI'm here to help you grow healthy vegetables. Choose a prompt template below, enter your plant name, and I'll provide comprehensive growing guidance tailored to your needs.",
+      text: "🌱 **Welcome to AirWise AI Farming Assistant!**\n\nI'm here to help you grow healthy vegetables and optimize your farming practices. \n\n**How to get started:**\n• Choose a topic from the cards below\n• Enter your plant name\n• Customize your question if needed\n• Get personalized farming advice!\n\nLet's grow something amazing together! 🌾",
       isUser: false,
       timestamp: DateTime.now(),
     ));
@@ -101,12 +124,11 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
       isLoading = true;
     });
 
-    // Always scroll when user sends a message
     _scrollToBottomForced();
 
     try {
       final response = await http.post(
-        Uri.parse('http://$ipAddress/api/ai-chat'),
+        Uri.parse('https://$ipAddress/api/ai-chat'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'prompt': prompt}),
       );
@@ -129,7 +151,6 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
       setState(() {
         isLoading = false;
       });
-      // Smooth scroll after AI response if user is near bottom
       _scrollToBottom();
     }
   }
@@ -137,13 +158,12 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
   void _addErrorMessage() {
     setState(() {
       messages.add(ChatMessage(
-        text: "Sorry, I'm having trouble connecting right now. Please try again later.",
+        text: "⚠️ **Connection Error**\n\nI'm having trouble connecting to the server right now. Please check your internet connection and try again.\n\nIf the problem persists, please contact support.",
         isUser: false,
         timestamp: DateTime.now(),
         isError: true,
       ));
     });
-    // Always scroll to bottom when error message is added
     _scrollToBottomForced();
   }
 
@@ -184,6 +204,11 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
       selectedPromptTemplate = template.template;
       _customPromptController.text = template.template;
     });
+    
+    // Add haptic feedback
+    if (Theme.of(context).platform == TargetPlatform.iOS) {
+      // Light haptic feedback for iOS
+    }
   }
 
   void _sendTemplatePrompt() {
@@ -191,255 +216,417 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
     String prompt = _customPromptController.text.trim();
     
     if (plant.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a plant name'),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
+      _showSnackBar('Please enter a plant name', isError: true);
+      _plantFocusNode.requestFocus();
       return;
     }
 
     if (prompt.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please select a prompt template or write a custom prompt'),
-          backgroundColor: Colors.red.shade600,
-        ),
-      );
+      _showSnackBar('Please select a topic or write a custom prompt', isError: true);
+      _promptFocusNode.requestFocus();
       return;
     }
 
     String finalPrompt = prompt.replaceAll('{plant}', plant);
     _sendMessage(finalPrompt);
     
-    // Clear the input fields
+    // Clear inputs and collapse input area
     _plantController.clear();
     _customPromptController.clear();
+    setState(() {
+      selectedPromptTemplate = '';
+      _isInputExpanded = false;
+    });
+    
+    // Unfocus to hide keyboard
+    FocusScope.of(context).unfocus();
+  }
+
+  void _showSnackBar(String message, {bool isError = false}) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            Icon(
+              isError ? Icons.error_outline : Icons.check_circle_outline,
+              color: Colors.white,
+              size: 20,
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: Text(
+                message,
+                style: GoogleFonts.nunito(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ),
+          ],
+        ),
+        backgroundColor: isError ? Colors.red.shade600 : Colors.green.shade600,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        margin: const EdgeInsets.all(16),
+        duration: const Duration(seconds: 3),
+      ),
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.green.shade50,
+      backgroundColor: Colors.grey.shade50,
       appBar: AppBar(
-        title: Text(
-          'AI Farming Assistant',
-          style: GoogleFonts.nunito(
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-            fontSize: 22,
-            color: Colors.white,
-          ),
+        title: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(
+                Icons.eco,
+                color: Colors.white,
+                size: 24,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  'AirWise AI',
+                  style: GoogleFonts.nunito(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 20,
+                    color: Colors.white,
+                  ),
+                ),
+                Text(
+                  'Farming Assistant',
+                  style: GoogleFonts.nunito(
+                    fontSize: 12,
+                    color: Colors.white.withValues(alpha: 0.8),
+                    fontWeight: FontWeight.w500,
+                  ),
+                ),
+              ],
+            ),
+          ],
         ),
         backgroundColor: Colors.green.shade700,
-        elevation: 6,
-        iconTheme: IconThemeData(color: Colors.white),
+        elevation: 0,
+        iconTheme: const IconThemeData(color: Colors.white),
+        actions: [
+          IconButton(
+            onPressed: () {
+              setState(() {
+                _isInputExpanded = !_isInputExpanded;
+              });
+            },
+            icon: Icon(
+              _isInputExpanded ? Icons.keyboard_arrow_down : Icons.keyboard_arrow_up,
+              color: Colors.white,
+            ),
+            tooltip: _isInputExpanded ? 'Collapse input' : 'Expand input',
+          ),
+        ],
       ),
-      body: Stack(
-        children: [
-          Column(
+      body: Column(
         children: [
           // Chat messages area
           Expanded(
-            flex: 3,
             child: Container(
-              margin: EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: Colors.white,
-                borderRadius: BorderRadius.circular(12),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: Offset(0, 2),
-                  ),
-                ],
+                gradient: LinearGradient(
+                  begin: Alignment.topCenter,
+                  end: Alignment.bottomCenter,
+                  colors: [
+                    Colors.green.shade700,
+                    Colors.grey.shade50,
+                  ],
+                  stops: const [0.0, 0.1],
+                ),
               ),
-              child: ListView.builder(
-                controller: _scrollController,
-                padding: EdgeInsets.all(16),
-                physics: AlwaysScrollableScrollPhysics(),
-                itemCount: messages.length + (isLoading ? 1 : 0),
-                itemBuilder: (context, index) {
-                  if (index == messages.length && isLoading) {
-                    return _buildTypingIndicator();
-                  }
-                  return _buildMessageBubble(messages[index]);
-                },
+              child: Container(
+                margin: const EdgeInsets.fromLTRB(16, 8, 16, 0),
+                decoration: BoxDecoration(
+                  color: Colors.white,
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  boxShadow: [
+                    BoxShadow(
+                      color: Colors.black.withValues(alpha: 0.1),
+                      blurRadius: 10,
+                      offset: const Offset(0, -2),
+                    ),
+                  ],
+                ),
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                  child: ListView.builder(
+                    controller: _scrollController,
+                    padding: const EdgeInsets.all(20),
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    itemCount: messages.length + (isLoading ? 1 : 0),
+                    itemBuilder: (context, index) {
+                      if (index == messages.length && isLoading) {
+                        return _buildTypingIndicator();
+                      }
+                      return _buildMessageBubble(messages[index]);
+                    },
+                  ),
+                ),
               ),
             ),
           ),
           
           // Input area
-          Expanded(
-            flex: 2,
-            child: Container(
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.1),
-                    blurRadius: 8,
-                    offset: Offset(0, -2),
-                  ),
-                ],
-              ),
-              child: SingleChildScrollView(
-                padding: EdgeInsets.all(16),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Text(
-                      'Choose a prompt template:',
-                      style: GoogleFonts.nunito(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.green.shade700,
-                      ),
-                    ),
-                    SizedBox(height: 8),
-                    
-                    // Prompt templates grid
-                    SizedBox(
-                      height: 200, // Fixed height for grid
-                      child: GridView.builder(
-                        gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 3,
-                          childAspectRatio: 1.0,
-                          crossAxisSpacing: 8,
-                          mainAxisSpacing: 8,
-                        ),
-                        itemCount: promptTemplates.length,
-                        itemBuilder: (context, index) {
-                          final template = promptTemplates[index];
-                          return _buildTemplateCard(template);
-                        },
-                      ),
-                    ),
-                    
-                    SizedBox(height: 16),
-                    
-                    // Plant name input
-                    TextField(
-                      controller: _plantController,
-                      decoration: InputDecoration(
-                        hintText: 'Enter plant name (e.g., tomatoes, carrots)',
-                        prefixIcon: Icon(Icons.grass, color: Colors.green.shade600),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.green.shade700, width: 2),
-                        ),
-                      ),
-                    ),
-                    
-                    SizedBox(height: 12),
-                    
-                    // Custom prompt input
-                    TextField(
-                      controller: _customPromptController,
-                      maxLines: 2,
-                      decoration: InputDecoration(
-                        hintText: 'Customize your prompt or use template...',
-                        prefixIcon: Icon(Icons.edit, color: Colors.green.shade600),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(12),
-                          borderSide: BorderSide(color: Colors.green.shade700, width: 2),
-                        ),
-                      ),
-                    ),
-                    
-                    SizedBox(height: 12),
-                    
-                    // Send button
-                    SizedBox(
-                      width: double.infinity,
-                      child: ElevatedButton.icon(
-                        onPressed: isLoading ? null : _sendTemplatePrompt,
-                        icon: Icon(Icons.send),
-                        label: Text(
-                          'Ask AI Assistant',
-                          style: GoogleFonts.nunito(
-                            fontWeight: FontWeight.w600,
-                            fontSize: 16,
-                          ),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.green.shade700,
-                          foregroundColor: Colors.white,
-                          padding: EdgeInsets.symmetric(vertical: 16),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ],
+          AnimatedContainer(
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            decoration: BoxDecoration(
+              color: Colors.white,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 10,
+                  offset: const Offset(0, -2),
                 ),
-              ),
+              ],
+            ),
+            child: Column(
+              children: [
+                                 // Quick templates section
+                 Container(
+                   height: _isInputExpanded ? 160 : 120,
+                   padding: const EdgeInsets.fromLTRB(20, 16, 20, 8),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            Icons.lightbulb_outline,
+                            color: Colors.green.shade700,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            'Quick Topics',
+                            style: GoogleFonts.nunito(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.green.shade700,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 12),
+                                             Expanded(
+                         child: SizedBox(
+                           height: 80,
+                           child: ListView.builder(
+                             scrollDirection: Axis.horizontal,
+                             itemCount: promptTemplates.length,
+                             itemBuilder: (context, index) {
+                               final template = promptTemplates[index];
+                               return Padding(
+                                 padding: EdgeInsets.only(
+                                   right: index == promptTemplates.length - 1 ? 0 : 12,
+                                 ),
+                                 child: _buildTemplateChip(template),
+                               );
+                             },
+                           ),
+                         ),
+                       ),
+                    ],
+                  ),
+                ),
+                
+                // Input fields
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(20, 8, 20, 20),
+                  child: Column(
+                    children: [
+                      // Plant name input
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: TextField(
+                          controller: _plantController,
+                          focusNode: _plantFocusNode,
+                          decoration: InputDecoration(
+                            hintText: 'What plant are you growing?',
+                            hintStyle: GoogleFonts.nunito(
+                              color: Colors.grey.shade500,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.grass,
+                              color: Colors.green.shade600,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 12),
+                      
+                      // Custom prompt input
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.grey.shade50,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: Colors.grey.shade200),
+                        ),
+                        child: TextField(
+                          controller: _customPromptController,
+                          focusNode: _promptFocusNode,
+                          maxLines: _isInputExpanded ? 3 : 2,
+                          decoration: InputDecoration(
+                            hintText: 'Your question will appear here...',
+                            hintStyle: GoogleFonts.nunito(
+                              color: Colors.grey.shade500,
+                            ),
+                            prefixIcon: Icon(
+                              Icons.edit_outlined,
+                              color: Colors.green.shade600,
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              horizontal: 16,
+                              vertical: 16,
+                            ),
+                          ),
+                        ),
+                      ),
+                      
+                      const SizedBox(height: 16),
+                      
+                      // Send button
+                      SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton(
+                          onPressed: isLoading ? null : _sendTemplatePrompt,
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.green.shade700,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 16),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                            elevation: 2,
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              if (isLoading) ...[
+                                SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(width: 12),
+                                Text(
+                                  'Getting Answer...',
+                                  style: GoogleFonts.nunito(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ] else ...[
+                                Icon(Icons.send_rounded, size: 20),
+                                const SizedBox(width: 8),
+                                Text(
+                                  'Ask AI Assistant',
+                                  style: GoogleFonts.nunito(
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 16,
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
           ),
         ],
       ),
-      // Floating action button to scroll to bottom
-      if (!_isNearBottom)
-        Positioned(
-          bottom: 20,
-          right: 20,
-          child: FloatingActionButton(
-            mini: true,
-            backgroundColor: Colors.green.shade700,
-            onPressed: () {
-              _scrollToBottomForced();
-            },
-            child: Icon(
-              Icons.keyboard_arrow_down,
-              color: Colors.white,
-            ),
+      floatingActionButton: ScaleTransition(
+        scale: _fabAnimation,
+        child: FloatingActionButton(
+          mini: true,
+          backgroundColor: Colors.green.shade700,
+          onPressed: _scrollToBottomForced,
+          child: const Icon(
+            Icons.keyboard_arrow_down,
+            color: Colors.white,
           ),
         ),
-    ],
-  ),
-);
+      ),
+    );
   }
 
-  Widget _buildTemplateCard(PromptTemplate template) {
+  Widget _buildTemplateChip(PromptTemplate template) {
     bool isSelected = selectedPromptTemplate == template.template;
     
     return GestureDetector(
       onTap: () => _useTemplate(template),
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        width: 90,
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green.shade100 : Colors.grey.shade100,
-          borderRadius: BorderRadius.circular(8),
+          color: isSelected ? template.color.withValues(alpha: 0.1) : Colors.grey.shade100,
+          borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: isSelected ? Colors.green.shade700 : Colors.grey.shade300,
+            color: isSelected ? template.color : Colors.grey.shade300,
             width: isSelected ? 2 : 1,
           ),
         ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
             Icon(
               template.icon,
-              color: isSelected ? Colors.green.shade700 : Colors.grey.shade600,
-              size: 24,
+              color: isSelected ? template.color : Colors.grey.shade600,
+              size: 20,
             ),
-            SizedBox(height: 4),
-            Text(
-              template.title,
-              textAlign: TextAlign.center,
-              style: GoogleFonts.nunito(
-                fontSize: 10,
-                fontWeight: FontWeight.w600,
-                color: isSelected ? Colors.green.shade700 : Colors.grey.shade700,
+            const SizedBox(height: 2),
+            Flexible(
+              child: Text(
+                template.title,
+                textAlign: TextAlign.center,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.nunito(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  color: isSelected ? template.color : Colors.grey.shade700,
+                  height: 1.1,
+                ),
               ),
             ),
           ],
@@ -450,33 +637,44 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
 
   Widget _buildMessageBubble(ChatMessage message) {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisAlignment: message.isUser ? MainAxisAlignment.end : MainAxisAlignment.start,
         children: [
           if (!message.isUser) ...[
-            CircleAvatar(
-              backgroundColor: message.isError ? Colors.red.shade700 : Colors.green.shade700,
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: message.isError ? Colors.red.shade100 : Colors.green.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Icon(
-                message.isError ? Icons.error : Icons.eco,
-                color: Colors.white,
+                message.isError ? Icons.error_outline : Icons.eco,
+                color: message.isError ? Colors.red.shade700 : Colors.green.shade700,
                 size: 20,
               ),
             ),
-            SizedBox(width: 8),
+            const SizedBox(width: 12),
           ],
           
           Flexible(
             child: Container(
-              padding: EdgeInsets.all(16),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 color: message.isUser 
                     ? Colors.green.shade700 
                     : message.isError 
                         ? Colors.red.shade50
-                        : Colors.grey.shade100,
-                borderRadius: BorderRadius.circular(16),
+                        : Colors.grey.shade50,
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha:0.05),
+                    blurRadius: 5,
+                    offset: const Offset(0, 2),
+                  ),
+                ],
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -485,14 +683,15 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
                     message.text,
                     baseColor: message.isUser ? Colors.white : Colors.black87,
                   ),
-                  SizedBox(height: 4),
+                  const SizedBox(height: 8),
                   Text(
                     _formatTime(message.timestamp),
                     style: GoogleFonts.nunito(
                       color: message.isUser 
                           ? Colors.white70 
-                          : Colors.grey.shade600,
-                      fontSize: 10,
+                          : Colors.grey.shade500,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w500,
                     ),
                   ),
                 ],
@@ -501,12 +700,16 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
           ),
           
           if (message.isUser) ...[
-            SizedBox(width: 8),
-            CircleAvatar(
-              backgroundColor: Colors.blue.shade700,
+            const SizedBox(width: 12),
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.blue.shade100,
+                borderRadius: BorderRadius.circular(20),
+              ),
               child: Icon(
                 Icons.person,
-                color: Colors.white,
+                color: Colors.blue.shade700,
                 size: 20,
               ),
             ),
@@ -518,19 +721,34 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
 
   Widget _buildTypingIndicator() {
     return Container(
-      margin: EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: 20),
       child: Row(
         children: [
-          CircleAvatar(
-            backgroundColor: Colors.green.shade700,
-            child: Icon(Icons.eco, color: Colors.white, size: 20),
-          ),
-          SizedBox(width: 8),
           Container(
-            padding: EdgeInsets.all(16),
+            padding: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.grey.shade100,
-              borderRadius: BorderRadius.circular(16),
+              color: Colors.green.shade100,
+              borderRadius: BorderRadius.circular(20),
+            ),
+            child: Icon(
+              Icons.eco,
+              color: Colors.green.shade700,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: Colors.grey.shade50,
+              borderRadius: BorderRadius.circular(20),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha:0.05),
+                  blurRadius: 5,
+                  offset: const Offset(0, 2),
+                ),
+              ],
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -543,12 +761,13 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
                     valueColor: AlwaysStoppedAnimation<Color>(Colors.green.shade700),
                   ),
                 ),
-                SizedBox(width: 8),
+                const SizedBox(width: 12),
                 Text(
-                  'AI is thinking...',
+                  'AI is analyzing...',
                   style: GoogleFonts.nunito(
                     color: Colors.grey.shade600,
                     fontSize: 14,
+                    fontWeight: FontWeight.w500,
                   ),
                 ),
               ],
@@ -571,7 +790,7 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
       String line = lines[i];
       
       if (line.trim().isEmpty) {
-        spans.add(TextSpan(text: '\n'));
+        spans.add(const TextSpan(text: '\n'));
         continue;
       }
       
@@ -582,7 +801,7 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
           text: '$headerText\n',
           style: GoogleFonts.nunito(
             color: baseColor,
-            fontSize: 16,
+            fontSize: 17,
             fontWeight: FontWeight.bold,
             height: 1.5,
           ),
@@ -596,7 +815,7 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
       
       // Add newline if not the last line
       if (i < lines.length - 1) {
-        spans.add(TextSpan(text: '\n'));
+        spans.add(const TextSpan(text: '\n'));
       }
     }
     
@@ -699,8 +918,11 @@ class _AIChatbotPageState extends State<AIChatbotPage> {
   void dispose() {
     _plantController.dispose();
     _customPromptController.dispose();
+    _plantFocusNode.dispose();
+    _promptFocusNode.dispose();
     _scrollController.removeListener(_scrollListener);
     _scrollController.dispose();
+    _fabAnimationController.dispose();
     super.dispose();
   }
 }
@@ -723,10 +945,12 @@ class PromptTemplate {
   final String title;
   final IconData icon;
   final String template;
+  final Color color;
 
   PromptTemplate({
     required this.title,
     required this.icon,
     required this.template,
+    required this.color,
   });
 } 
