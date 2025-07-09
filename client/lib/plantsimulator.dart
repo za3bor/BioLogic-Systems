@@ -76,7 +76,7 @@ class _PlantSimulatorPageState extends State<PlantSimulatorPage> {
     });
 
     final response = await http.post(
-      Uri.parse('http://$ipAddress/api/simulate-vegetable-farming'),
+      Uri.parse('https://$ipAddress/api/simulate-vegetable-farming'),
       headers: {'Content-Type': 'application/json'},
       body: jsonEncode({
         'plant': plant,
@@ -90,7 +90,7 @@ class _PlantSimulatorPageState extends State<PlantSimulatorPage> {
         'plantingMonth': plantingMonth,
       }),
     );
-    
+    print(response.body);
     if (response.statusCode == 200) {
       final data = jsonDecode(response.body);
       setState(() {
