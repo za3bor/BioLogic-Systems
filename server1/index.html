@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Eco-Farming API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c5530;
+            text-align: center;
+        }
+        .endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 5px;
+            border-left: 4px solid #28a745;
+        }
+        .method {
+            font-weight: bold;
+            color: #007bff;
+        }
+        .url {
+            font-family: monospace;
+            background: #e9ecef;
+            padding: 2px 5px;
+            border-radius: 3px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🌱 Eco-Farming API</h1>
+        <p>Welcome to the Eco-Farming API! This API provides endpoints for environmental data, farming recommendations, and AI-powered agriculture advice.</p>
+        
+        <h2>📋 Available Endpoints</h2>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/eco-challenge</span><br>
+            Get a random eco-friendly challenge
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/plant-names</span><br>
+            Get list of available plant names
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/countries</span><br>
+            Get list of all countries
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/cities?country=CountryName</span><br>
+            Get cities for a specific country
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/weather?city=CityName</span><br>
+            Get weather data for a city
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/aqi?city=CityName</span><br>
+            Get air quality index for a city
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">POST</span> <span class="url">/api/ai-chat</span><br>
+            Chat with AI farming advisor<br>
+            <em>Body: {"message": "Your farming question"}</em>
+        </div>
+        
+        <div class="endpoint">
+            <span class="method">GET</span> <span class="url">/api/eco-score?username=user</span><br>
+            Get user's eco score
+        </div>
+        
+        <h2>🔗 Quick Test</h2>
+        <p>Try these endpoints:</p>
+        <ul>
+            <li><a href="/api/plant-names" target="_blank">/api/plant-names</a></li>
+            <li><a href="/api/eco-challenge" target="_blank">/api/eco-challenge</a></li>
+            <li><a href="/api/countries" target="_blank">/api/countries</a></li>
+        </ul>
+        
+        <h2>📚 Documentation</h2>
+        <p>For complete API documentation, check the <code>DEPLOYMENT.md</code> file in the repository.</p>
+    </div>
+</body>
+</html> 
